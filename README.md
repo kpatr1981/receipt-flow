@@ -98,7 +98,7 @@ such receipt must carry an **AADE QR code**, and that code is what makes a readi
 | On the receipt | What the tool gets from it |
 |---|---|
 | **AADE signature QR**: link to `www1.aade.gr/tameiakes/...?SIG=` holding device id, counter, hash, optional date-time (YYMMDDHHMM) and the total | total always; date and time when the code has them (otherwise the date comes from the print) |
-| **`;`-separated QR** (fuel pumps): type; serial; hash; `YYYY-MM-DD`; time; …; litres; price; total | date, time and total, exact |
+| **`;`-separated QR** (fuel pumps): type; serial; hash; `YYYY-MM-DD`; time; …; price per litre; litres; total | date, time and total, exact |
 | **e-invoice provider QR** (links to the issued document, e.g. `epsilondigital*.epsilonnet.gr`) | no values in the code: used only to spot duplicates; date and total come from the print |
 | **numeric barcodes** (PDF417 / DataMatrix on some taximeters) | no values: the print is used |
 | **no code** (older receipts, unreadable codes) | Tesseract on the printed text (Greek + English) |
