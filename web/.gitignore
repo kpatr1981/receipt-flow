@@ -1,0 +1,6 @@
+node_modules/
+# Built from your own receipt photos (tools/make_corpus.py, tools/py_reference.py): personal data
+test/corpus/
+dist/
+# Third-party builds + language data: npm install && npm run vendor
+vendor/

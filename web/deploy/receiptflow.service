@@ -1,0 +1,17 @@
+[Unit]
+Description=Receipt Flow (static web app, port 8095)
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/receiptflow/server.py --root /opt/receiptflow/www --port 8095
+DynamicUser=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ReadOnlyPaths=/opt/receiptflow
+MemoryMax=128M
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

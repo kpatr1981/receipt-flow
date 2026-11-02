@@ -1,0 +1,5 @@
+#!/bin/sh
+# receipt-mcp: see receiptflow/mcp_server.py
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
+exec "$ROOT/.venv/bin/python" -m receiptflow.mcp_server "$@"

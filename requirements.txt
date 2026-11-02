@@ -1,0 +1,9 @@
+flask
+opencv-python-headless
+numpy
+pillow
+pillow-heif
+pytesseract
+zxing-cpp
+pytest
+mcp

@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Receipt Flow</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--ink:#1d1d1b;--muted:#6b6a66;--line:#e2e0da;--accent:#1f5fbf;--accent-ink:#fff;--warn:#a35a00;--warn-bg:#fff3e0;--ok:#1d7a3e;--ok-bg:#e6f4ea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#21211f;--ink:#ecebe7;--muted:#9c9a94;--line:#363532;--accent:#6aa0ff;--accent-ink:#0d1626;--warn:#ffb562;--warn-bg:#3a2a12;--ok:#7bd99a;--ok-bg:#16301f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:1180px;margin:0 auto;padding:28px 16px 80px}
+h1{font-size:24px;margin:0 0 2px}
+.sub{color:var(--muted);margin:0 0 24px}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px}
+h2{font-size:17px;margin:0 0 14px;display:flex;gap:10px;align-items:center}
+.step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:13px;font-weight:700}
+.drop{display:block;border:2px dashed var(--line);border-radius:10px;padding:34px 16px;text-align:center;cursor:pointer;color:var(--muted);transition:.15s}
+.drop.over{border-color:var(--accent);color:var(--ink)}
+.drop strong{color:var(--ink)}
+.thumbs{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.thumbs img{height:90px;border-radius:6px;border:1px solid var(--line)}
+button{font:inherit;border:0;border-radius:8px;padding:10px 18px;background:var(--accent);color:var(--accent-ink);font-weight:600;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:default}
+.busy{color:var(--muted);margin-left:12px}
+table{width:100%;border-collapse:collapse}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td img{width:96px;border-radius:4px;border:1px solid var(--line);cursor:zoom-in}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%}
+input[type=number]{text-align:right}
+tr.off td:not(:first-child):not(:last-child){opacity:.35}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px}
+.badge.qr{background:var(--ok-bg);color:var(--ok)}
+.badge.ocr,.badge.none,.badge.manual{background:var(--warn-bg);color:var(--warn)}
+.warn{color:var(--warn);font-size:13px;margin-top:4px}
+input.need{border:2px solid #d93025;background:var(--warn-bg)}
+.needmsg{color:#d93025;font-size:12px;margin-top:3px}
+.verify{display:flex;align-items:center;gap:6px;font-weight:600;white-space:nowrap;cursor:pointer}
+.verify input{width:20px;height:20px;accent-color:var(--ok)}
+tr.ok td{background:var(--ok-bg)}
+.hint{color:var(--muted);margin:-6px 0 12px}
+.dupes{color:var(--warn);margin-top:10px}
+.badge.dup{background:var(--warn-bg);color:var(--warn);margin-left:4px}
+.todo{margin-top:16px;padding:12px 14px;border-radius:8px;background:var(--warn-bg);color:var(--warn);font-weight:600}
+.todo.done{background:var(--ok-bg);color:var(--ok)}
+.addrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px;color:var(--muted)}
+.addrow select{width:auto;max-width:280px}
+.progress{font-weight:600}
+.sure{color:var(--ok);font-size:12px;margin-top:3px}
+.needcheck{color:#d93025;font-size:12px;font-weight:600;margin-top:3px}
+.month{border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:14px;display:grid;grid-template-columns:240px 1fr;gap:18px;align-items:start}
+.month>img{width:100%;border:1px solid var(--line);border-radius:4px;background:#fff;cursor:zoom-in}
+.month h3{margin:0 0 2px;font-size:17px}
+.month .meta{margin:0 0 10px;color:var(--muted)}
+.month table.copy td,.month table.copy th{padding:5px 8px;font-variant-numeric:tabular-nums}
+.month table.copy td.num{text-align:right}
+.month table.copy tr.unv td{color:var(--muted);font-style:italic}
+.copybar{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.copied{color:var(--ok);font-weight:600}
+.nameopt{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.nameopt input{max-width:320px}
+.nameopt .opt{color:var(--muted);font-weight:400}
+.copyopts{display:flex;flex-wrap:wrap;gap:14px;align-items:center;color:var(--muted)}
+.copyopts input{width:auto}
+@media (max-width:760px){.month{grid-template-columns:1fr}}
+.result a{color:var(--accent)}
+.err{color:#c62828;margin-top:10px}
+.hidden{display:none}
+.scroll{overflow-x:auto}
+dialog{border:0;padding:0;background:transparent;max-width:95vw}
+dialog img{max-height:90vh;max-width:95vw;border-radius:6px}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+@media (max-width:760px){table,tbody,tr,td{display:block}thead{display:none}tr{border-bottom:1px solid var(--line);padding:8px 0}td{border:0;padding:4px 0}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Receipt Flow</h1>
+  <p class="sub">Receipt photos → one PDF page per month, plus a table of dates and amounts to copy. Everything runs on this computer.</p>
+
+  <section id="s1">
+    <h2><span class="step">1</span>Add receipt photos</h2>
+    <label class="drop" id="drop">
+      <input type="file" id="files" accept="image/*,.heic,.heif" multiple hidden>
+      <strong>Drop photos here</strong> or click to choose.<br>One photo can hold several receipts.
+    </label>
+    <div class="thumbs" id="thumbs"></div>
+    <button id="read" disabled>Read receipts</button><span class="busy hidden" id="busy1">Finding receipts and reading QR codes…</span>
+    <div class="err" id="err1"></div>
+    <div class="dupes" id="dupes"></div>
+  </section>
+
+  <section id="s2" class="hidden">
+    <h2><span class="step">2</span>Check what was read</h2>
+    <p class="hint">Receipts whose QR code gave the exact date and total are ticked already. For the others, compare the date and amount with the picture (click it to enlarge), fix or type in what's missing, then tick <b>Verified</b>. <span class="progress" id="progress"></span></p>
+    <div class="scroll"><table>
+      <thead><tr><th>Use</th><th>Receipt</th><th style="width:150px">Date</th><th style="width:110px">Amount €</th><th>Read from</th><th>Verified</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+    <div class="addrow">
+      <span>Missed a receipt?</span>
+      <select id="addPhoto"></select>
+      <button class="ghost" id="addBtn">+ Add it by hand</button>
+    </div>
+    <div class="todo" id="todo"></div>
+  </section>
+
+  <section id="s3" class="hidden">
+    <h2><span class="step">3</span>Months</h2>
+    <div class="nameopt">
+      <label for="pdfName">Name on the PDF <span class="opt">(optional)</span></label>
+      <input id="pdfName" placeholder="e.g. your name, or leave empty" autocomplete="name">
+    </div>
+    <div class="copyopts">
+      <span>Amounts with</span>
+      <label><input type="radio" name="dec" value=","> decimal comma (12,50)</label>
+      <label><input type="radio" name="dec" value="."> decimal point (12.50)</label>
+    </div>
+    <div class="err" id="err3"></div>
+    <div id="months"></div>
+    <p style="margin-top:16px"><button id="save">Save the PDFs</button><span class="busy hidden" id="busy3">Saving…</span></p>
+    <div class="result" id="result"></div>
+  </section>
+</main>
+<dialog id="zoom"><img alt=""></dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+let files = [], job = null, receipts = [], previewTimer = null, photoNames = [];
+
+const drop = $('#drop');
+['dragover','dragenter'].forEach(e => drop.addEventListener(e, ev => {ev.preventDefault(); drop.classList.add('over')}));
+['dragleave','drop'].forEach(e => drop.addEventListener(e, ev => {ev.preventDefault(); drop.classList.remove('over')}));
+drop.addEventListener('drop', ev => addFiles(ev.dataTransfer.files));
+$('#files').addEventListener('change', ev => addFiles(ev.target.files));
+
+function addFiles(list) {
+  for (const f of list) if (f.type.startsWith('image/') || /\.hei[cf]$/i.test(f.name)) files.push(f);
+  const t = $('#thumbs'); t.innerHTML = '';
+  files.forEach(f => {
+    const img = document.createElement('img'); img.title = f.name;
+    img.src = URL.createObjectURL(f); img.onerror = () => img.replaceWith(Object.assign(document.createElement('span'), {textContent: f.name}));
+    t.appendChild(img);
+  });
+  $('#read').disabled = !files.length;
+}
+
+$('#read').onclick = async () => {
+  const fd = new FormData(); files.forEach(f => fd.append('photos', f));
+  $('#read').disabled = true; $('#busy1').classList.remove('hidden'); $('#err1').textContent = '';
+  try {
+    const r = await fetch('/api/photos', {method: 'POST', body: fd});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.statusText);
+    photoNames = d.photos || [];
+    $('#addPhoto').innerHTML = photoNames.map(n => `<option value="${esc(n)}">from ${esc(n.replace(/^\d+_/, ''))}</option>`).join('');
+    job = d.job; receipts = d.receipts.map(x => ({...x, skip: !!x.skip, verified: !!x.certain && !x.skip}));
+    $('#dupes').innerHTML = (d.skipped || []).map(x => `<div>Skipped <b>${esc(x.photo)}</b>: the same file as ${esc(x.same_as)}.</div>`).join('');
+    if (!receipts.length) $('#err1').textContent = 'No receipts could be read in these photos: add them by hand below.';
+    renderRows(); $('#s2').classList.remove('hidden');
+    $('#result').innerHTML = ''; refreshPreview();
+  } catch (e) { $('#err1').textContent = e.message; }
+  finally { $('#read').disabled = false; $('#busy1').classList.add('hidden'); }
+};
+
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function renderRows() {
+  $('#rows').innerHTML = receipts.map((r, i) => `
+    <tr data-i="${i}" class="${r.skip ? 'off' : ''} ${r.verified && !r.skip ? 'ok' : ''}">
+      <td><input type="checkbox" data-f="use" ${r.skip ? '' : 'checked'} style="width:auto"></td>
+      <td><img src="/job/${job}/crop/${r.id}.jpg" alt="receipt ${i + 1}" data-zoom></td>
+      <td><input type="date" data-f="date" value="${esc(r.date)}" class="${r.date ? '' : 'need'}">
+          ${r.date ? '' : '<div class="needmsg">Couldn\'t read: type the date</div>'}</td>
+      <td><input type="number" step="0.01" min="0" data-f="amount" value="${r.amount ?? ''}" placeholder="0.00" class="${r.amount == null ? 'need' : ''}">
+          ${r.amount == null ? '<div class="needmsg">Couldn\'t read: type the amount</div>' : ''}</td>
+      <td>${r.duplicate_of ? '<span class="badge dup">Duplicate</span> ' : ''}<span class="badge ${r.source || 'none'}">${r.source === 'qr' ? 'QR code' : r.source === 'ocr' ? 'Text (OCR)' : r.source === 'manual' ? 'By hand' : 'Not read'}</span>
+          ${(r.warnings || []).map(w => `<div class="warn">${esc(w)}</div>`).join('')}</td>
+      <td><label class="verify"><input type="checkbox" data-f="verified" ${r.verified ? 'checked' : ''}>Verified</label>
+          ${r.certain ? '<div class="sure">Exact from QR</div>' : '<div class="needcheck">Please check</div>'}</td>
+    </tr>`).join('');
+  updateProgress();
+}
+
+$('#rows').addEventListener('input', ev => {
+  const tr = ev.target.closest('tr'), r = receipts[tr.dataset.i], f = ev.target.dataset.f;
+  if (f === 'use') { r.skip = !ev.target.checked; tr.classList.toggle('off', r.skip); }
+  else if (f === 'verified') {
+    if (ev.target.checked && (!r.date || r.amount == null || isNaN(r.amount))) {
+      ev.target.checked = false;
+      tr.querySelectorAll('input.need').forEach(x => x.focus());
+      $('#todo').textContent = 'Type the missing date and amount before ticking Verified.';
+      return;
+    }
+    r.verified = ev.target.checked;
+  }
+  else if (f === 'amount') r.amount = ev.target.value === '' ? null : parseFloat(ev.target.value);
+  else r[f] = ev.target.value;
+  if (f === 'date' || f === 'amount') {
+    const empty = f === 'date' ? !r.date : (r.amount == null || isNaN(r.amount));
+    ev.target.classList.toggle('need', empty);
+    const msg = ev.target.parentElement.querySelector('.needmsg'); if (msg && !empty) msg.remove();
+  }
+  tr.classList.toggle('ok', !!r.verified && !r.skip);
+  updateProgress();
+  renderMonths();
+  if (f === 'verified') return;
+  clearTimeout(previewTimer); previewTimer = setTimeout(refreshPreview, 500);
+});
+document.addEventListener('click', ev => {
+  if (ev.target.matches('[data-zoom]')) { $('#zoom img').src = ev.target.src; $('#zoom').showModal(); }
+  else if (ev.target.closest('dialog')) $('#zoom').close();
+});
+
+function pending() {
+  const use = receipts.filter(r => !r.skip);
+  return {
+    use,
+    missing: use.filter(x => !x.date || x.amount == null || isNaN(x.amount)).length,
+    unverified: use.filter(x => !x.verified).length,
+  };
+}
+
+function updateProgress() {
+  const p = pending();
+  const done = p.use.length - p.unverified;
+  $('#progress').textContent = `${done} of ${p.use.length} verified.`;
+  const ready = !!p.use.length && !p.missing && !p.unverified;
+  $('#save').disabled = !ready;
+  // Step 3 appears only once step 2 is finished.
+  const wasHidden = $('#s3').classList.contains('hidden');
+  $('#s3').classList.toggle('hidden', !ready);
+  const todo = $('#todo');
+  todo.classList.toggle('done', ready);
+  if (!p.use.length) todo.textContent = 'No receipts in use: add one by hand, or tick Use on one above.';
+  else if (p.missing) todo.textContent = `${p.missing} receipt(s) still need a date or amount typed in (or untick Use). Step 3 appears when every receipt is verified.`;
+  else if (p.unverified) todo.textContent = `Tick Verified on ${p.unverified} more receipt(s). Step 3 appears when every receipt is verified.`;
+  else todo.textContent = 'All receipts verified: see the months below.';
+  if (ready && wasHidden) { renderMonths(); setTimeout(() => $('#s3').scrollIntoView({behavior: 'smooth', block: 'start'}), 50); }
+}
+
+let previews = {};
+let pdfName = '';
+try { pdfName = localStorage.getItem('rf-name') || ''; } catch (e) {}
+$('#pdfName').value = pdfName;
+$('#pdfName').addEventListener('input', () => {
+  pdfName = $('#pdfName').value.trim();
+  try { localStorage.setItem('rf-name', pdfName); } catch (e) {}
+  clearTimeout(previewTimer); previewTimer = setTimeout(refreshPreview, 600);
+});
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let dec = ',';
+try { dec = localStorage.getItem('rf-dec') || ','; } catch (e) {}
+document.querySelector(`input[name=dec][value="${dec}"]`).checked = true;
+document.querySelectorAll('input[name=dec]').forEach(x => x.onchange = () => { dec = x.value; try { localStorage.setItem('rf-dec', dec); } catch (e) {} renderMonths(); });
+
+const ready = r => !r.skip && r.date && r.amount != null && !isNaN(r.amount);
+const ddmmyyyy = iso => iso.split('-').reverse().join('/');
+const money = v => v.toFixed(2).replace('.', dec);
+
+function monthGroups() {
+  const g = {};
+  receipts.filter(ready).forEach(r => (g[r.date.slice(0, 7)] ||= []).push(r));
+  return Object.keys(g).sort().map(k => ({key: k, rows: g[k].sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')))}));
+}
+
+function renderMonths() {
+  const groups = monthGroups(), stamp = Date.now();
+  $('#months').innerHTML = groups.map(({key, rows}) => {
+    const [y, m] = key.split('-');
+    const total = rows.reduce((t, r) => t + r.amount, 0);
+    const unv = rows.filter(r => !r.verified).length;
+    const pv = previews[key];
+    return `<div class="month" data-key="${key}">
+      ${pv ? `<img src="/job/${job}/${pv}?t=${stamp}" alt="PDF page for ${MONTHS[m - 1]} ${y}" data-zoom>` : '<div></div>'}
+      <div>
+        <h3>${MONTHS[m - 1]} ${y}</h3>
+        <p class="meta">${rows.length} receipt${rows.length > 1 ? 's' : ''} · total ${money(total)} €</p>
+        <div class="scroll"><table class="copy">
+          <thead><tr><th>No.</th><th>Date</th><th>Amount</th></tr></thead>
+          <tbody>${rows.map((r, i) => `<tr class="${r.verified ? '' : 'unv'}" title="${r.verified ? '' : 'Not verified yet'}">
+            <td>${i + 1}</td><td>${ddmmyyyy(r.date)}</td>
+            <td class="num">${money(r.amount)}</td></tr>`).join('')}</tbody>
+        </table></div>
+        <div class="copybar">
+          <button class="ghost" data-copy="dates" data-key="${key}" ${unv ? 'disabled' : ''}>Copy dates</button>
+          <button class="ghost" data-copy="amounts" data-key="${key}" ${unv ? 'disabled' : ''}>Copy amounts</button>
+          <span class="${unv ? 'needcheck' : 'copied'}" data-msg="${key}">${unv ? `Verify ${unv} more receipt${unv > 1 ? 's' : ''} to copy` : ''}</span>
+        </div>
+      </div></div>`;
+  }).join('') || '<p class="sub">Nothing to show yet: type the dates and amounts above.</p>';
+}
+
+async function copyText(text, key, label) {
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    const ta = Object.assign(document.createElement('textarea'), {value: text}); document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  const msg = document.querySelector(`[data-msg="${key}"]`); if (msg) { msg.className = 'copied'; msg.textContent = `${label} copied: paste them where you need them`; }
+}
+
+$('#months').addEventListener('click', ev => {
+  const what = ev.target.dataset.copy, key = ev.target.dataset.key;
+  if (!what || !key) return;
+  const rows = monthGroups().find(g => g.key === key).rows;
+  // One value per line, in receipt-number order: paste into any column, one cell per receipt.
+  const lines = rows.map(r => what === 'dates' ? ddmmyyyy(r.date) : money(r.amount));
+  copyText(lines.join('\n'), key, what === 'dates' ? `${rows.length} dates copied` : `${rows.length} amounts copied`);
+});
+
+async function refreshPreview() {
+  const use = receipts.filter(ready);
+  renderMonths();
+  if (!use.length) return;
+  const r = await fetch(`/api/preview/${job}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({receipts: use, name: pdfName})});
+  const d = await r.json();
+  if (!r.ok) { $('#err3').textContent = d.error; return; }
+  previews = Object.fromEntries(d.months.map(m => [m.key, m.preview]));
+  renderMonths();
+  updateProgress();
+}
+
+$('#addBtn').onclick = async () => {
+  const r = await fetch(`/api/manual/${job}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({photo: $('#addPhoto').value})});
+  const d = await r.json();
+  if (!r.ok) { $('#err3').textContent = d.error; return; }
+  receipts.push({...d.receipt, skip: false, verified: false});
+  renderRows(); renderMonths();
+  $('#rows tr:last-child input[data-f="date"]').focus();
+};
+
+$('#save').onclick = async () => {
+  $('#save').disabled = true; $('#busy3').classList.remove('hidden'); $('#err3').textContent = '';
+  try {
+    const r = await fetch(`/api/export/${job}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({receipts: receipts.filter(x => !x.skip), name: pdfName})});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    $('#result').innerHTML = `<p>Saved to <code>${esc(d.folder)}</code> <button class="ghost" id="openDir">Open folder</button></p>` +
+      d.months.map(m => `<p><strong>${esc(m.month)}</strong>: <a href="/output/${encodeURIComponent(m.pdf)}">${esc(m.pdf)}</a></p>`).join('');
+    $('#openDir').onclick = () => fetch('/api/open-output', {method: 'POST'});
+  } catch (e) { $('#err3').textContent = e.message; }
+  finally { $('#save').disabled = false; $('#busy3').classList.add('hidden'); }
+};
+</script>
+</body>
+</html>

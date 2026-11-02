@@ -1,0 +1,20 @@
+# Python / tooling
+.venv/
+__pycache__/
+.pytest_cache/
+.DS_Store
+
+# Results and request log
+output/
+
+# Personal: receipt photos, PDFs, expense reports, local notes. No photos or PDFs anywhere in the repo.
+*.[pP][dD][fF]
+*.[jJ][pP][gG]
+*.[jJ][pP][eE][gG]
+*.[hH][eE][iI][cC]
+*.[hH][eE][iI][fF]
+samples/
+tests/fixtures/
+/expenses_*
+PENDING.md
+.remember/
