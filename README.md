@@ -135,3 +135,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 Put your own test photos in `samples/` and `tests/fixtures/` (both git-ignored: receipts are personal). Uploaded photos and crops sit in
 `output/.jobs/` and are deleted after 7 days.
+
+## License
+
+MIT, see [LICENSE](LICENSE). Bundled tools keep their own licences: Tesseract and its language data (Apache 2.0), OpenCV (Apache 2.0), zxing-cpp / zxing-wasm, tesseract.js, heic2any (installed separately, not in this repository).
